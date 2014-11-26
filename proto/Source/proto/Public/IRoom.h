@@ -6,19 +6,30 @@
 #include "IRoom.generated.h"
 
 
+class AIRoom;
+
 USTRUCT()
 struct FSubRoom
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
 		bool exitLeft = false;							   
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
 		bool exitRight = false;							   
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
 		bool exitUp = false;							  
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
 		bool exitDown = false;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+		AIRoom* nextLeft = 0;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+		AIRoom* nextRight = 0;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+		AIRoom* nextUp = 0;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+		AIRoom* nextDown = 0;
 };
 
 /**
@@ -36,16 +47,29 @@ class PROTO_API AIRoom : public AActor
 
 	FSubRoom& getSubRoom(int x, int y);
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = subRoom)
 		TArray<FSubRoom> subRooms;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
 		int32 width;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
 		int32 height;
+
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = Position)
+		FVector2D position;
+
 
 	UFUNCTION(BlueprintImplementableEvent, Category = Creation)
 		void build(int32& numAvailableChests);
+
+	inline FSubRoom& getSubroom(int x, int y);
+	
 	
 };
+
+
+inline FSubRoom& AIRoom::getSubroom(int x, int y) 
+{
+	return subRooms[x + y*width];
+}

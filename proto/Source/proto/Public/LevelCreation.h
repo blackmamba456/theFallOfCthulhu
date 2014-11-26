@@ -15,16 +15,28 @@ typedef std::stack < std::pair<int, int> > NextRooms;
 
 struct RoomStr
 {
-	enum Dir
+	enum Flags
 	{
 		LEFT = 1,
 		RIGHT = 2,
 		UP = 4,
 		DOWN = 8,
+		MAIN = 16,
+		SUB = 32,
 	};
 
-	int idx = -1;
-	int entries = 0;
+	union
+	{
+		int roomIdx = -1;
+
+		struct
+		{
+			short x;
+			short y;
+		} mainPos;
+
+	};
+	int flags = 0;
 };
 
 
@@ -45,6 +57,9 @@ class PROTO_API ALevelCreation : public AActor
 			void createLevel(int32 levelSize);
 		
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+			TArray<AIRoom*> roomTemplates;
+
+		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
 			TArray<AIRoom*> rooms;
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
