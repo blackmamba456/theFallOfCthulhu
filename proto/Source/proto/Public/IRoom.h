@@ -45,7 +45,7 @@ class PROTO_API AIRoom : public AActor
 
 	int32 getHeight();
 
-	FSubRoom& getSubRoom(int x, int y);
+	inline FSubRoom& getSubRoom(int x, int y);
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = subRoom)
 		TArray<FSubRoom> subRooms;
@@ -63,13 +63,11 @@ class PROTO_API AIRoom : public AActor
 	UFUNCTION(BlueprintImplementableEvent, Category = Creation)
 		void build(int32& numAvailableChests);
 
-	inline FSubRoom& getSubroom(int x, int y);
-	
-	
+
 };
 
 
-inline FSubRoom& AIRoom::getSubroom(int x, int y) 
+inline FSubRoom& AIRoom::getSubRoom(int x, int y) 
 {
 	return subRooms[x + y*width];
 }

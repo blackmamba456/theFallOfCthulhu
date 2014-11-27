@@ -23,6 +23,7 @@ struct RoomStr
 		DOWN = 8,
 		MAIN = 16,
 		SUB = 32,
+		START = 64
 	};
 
 	union
@@ -55,11 +56,14 @@ class PROTO_API ALevelCreation : public AActor
 
 		UFUNCTION(BlueprintCallable, Category = Creation)
 			void createLevel(int32 levelSize);
-		
+
+		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+			TArray<AIRoom*> startRoomTemplates;
+
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
 			TArray<AIRoom*> roomTemplates;
 
-		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
+		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Level)
 			TArray<AIRoom*> rooms;
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
@@ -67,7 +71,7 @@ class PROTO_API ALevelCreation : public AActor
 
 private:
 
-	void setRoom(int x, int y, int idx);
+	void setRoom(int x, int y, AIRoom* room, int idx, int flags = 0);
 	void checkRooms(int x, int y);
 
 	RoomStr* get(int x, int y);

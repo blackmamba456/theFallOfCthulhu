@@ -19,11 +19,10 @@ ALevelCreation::ALevelCreation(const class FPostConstructInitializeProperties& P
 
 
 
-void ALevelCreation::setRoom(int x, int y, int idx)
+void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 {
 
 	// set room idx and entries
-	AIRoom* room = roomTemplates[idx];
 
 	for (int i = 0; i < room->getWidth(); i++)
 	{
@@ -38,7 +37,7 @@ void ALevelCreation::setRoom(int x, int y, int idx)
 		}
 	}
 	get(x, y)->roomIdx = idx;
-	get(x, y)->flags |= RoomStr::MAIN;
+	get(x, y)->flags |= (RoomStr::MAIN | flags);
 
 
 	// set and add next rooms
@@ -49,43 +48,53 @@ void ALevelCreation::setRoom(int x, int y, int idx)
 
 			FSubRoom& subRoom = room->getSubRoom(i, j);
 
+			RoomStr* layoutRoom = get(x + i, y + j);
+
 
 			if (subRoom.exitLeft && get(x + i - 1, y + j))
 			{
-				RoomStr* room = get(x + i - 1, y + j);
-				if (room->roomIdx == -1)
+				layoutRoom->flags |= RoomStr::LEFT;
+
+				RoomStr* neighbour = get(x + i - 1, y + j);
+				if (neighbour->roomIdx == -1)
 				{
-					room->flags |= RoomStr::RIGHT;
+					neighbour->flags |= RoomStr::RIGHT;
 					m_NextRooms.push({ x + i - 1, y + j });
 				}
 			}
 
 			if (subRoom.exitRight && get(x + i + 1, y + j))
 			{
-				RoomStr* room = get(x + i + 1, y + j);
-				if (room->roomIdx == -1)
+				layoutRoom->flags |= RoomStr::RIGHT;
+
+				RoomStr* neighbour = get(x + i + 1, y + j);
+				if (neighbour->roomIdx == -1)
 				{
-					room->flags |= RoomStr::LEFT;
+					neighbour->flags |= RoomStr::LEFT;
 					m_NextRooms.push({ x + i + 1, y + j });
 				}
 			}
 
 			if (subRoom.exitUp && get(x + i, y + j - 1))
 			{
-				RoomStr* room = get(x + i, y + j - 1);
-				if (room->roomIdx == -1)
+				layoutRoom->flags |= RoomStr::UP;
+
+				RoomStr* neighbour = get(x + i, y + j - 1);
+				if (neighbour->roomIdx == -1)
 				{
-					room->flags |= RoomStr::DOWN;
+					neighbour->flags |= RoomStr::DOWN;
 					m_NextRooms.push({ x + i, y + j - 1 });
 				}
 			}
 
 			if (subRoom.exitDown && get(x + i, y + j + 1))
 			{
-				RoomStr* room = get(x + i, y + j + 1);
-				if (room->roomIdx == -1)
+				layoutRoom->flags |= RoomStr::DOWN;
+
+				RoomStr* neighbour = get(x + i, y + j + 1);
+				if (neighbour->roomIdx == -1)
 				{
-					room->flags |= RoomStr::UP;
+					neighbour->flags |= RoomStr::UP;
 					m_NextRooms.push({ x + i, y + j + 1 });
 				}
 			}
@@ -226,7 +235,7 @@ void ALevelCreation::checkRooms(int x, int y)
 				//perfect fit
 				if (numTotalExits == (numFittingExits + numFreeExits))
 				{
-					setRoom(x - startX, y - startY, (i + start) % roomTemplates.Num());
+					setRoom(x - startX, y - startY, roomTemplates[(i+start)%roomTemplates.Num()], (i + start) % roomTemplates.Num());
 					return;
 				}
 				else if (bestRoom.prio < (numFittingExits + numFreeExits) / (float)numTotalExits) // check if its the next best room
@@ -246,7 +255,7 @@ void ALevelCreation::checkRooms(int x, int y)
 	{
 		// TODO adjust entries of neighbours
 
-		setRoom(x - bestRoom.subRoomX, y - bestRoom.subRoomY, bestRoom.idx);
+		setRoom(x - bestRoom.subRoomX, y - bestRoom.subRoomY, roomTemplates[bestRoom.idx], bestRoom.idx);
 	}
 
 
@@ -266,9 +275,10 @@ void ALevelCreation::createLevel(int32 levelSize)
 
 	int startPosition = levelSize / 2;
 
-	int startId = m_Random.RandRange(0, roomTemplates.Num() - 1);
+	int startId = m_Random.RandRange(0, startRoomTemplates.Num() - 1);
 
-	setRoom(startPosition, 0, startId);
+
+	setRoom(startPosition, 0, startRoomTemplates[startId], startId, RoomStr::START);
 
 
 	while (!m_NextRooms.empty())
@@ -310,9 +320,14 @@ void ALevelCreation::createLevel(int32 levelSize)
 				params.Name = FName(ss.str().c_str());
 				params.Owner = this;
 
-				room = (AIRoom*)world->SpawnActor(roomTemplates[get(i, j)->roomIdx]->GetClass(), &location, &rotation, params);
+				if (layoutRoom->flags & RoomStr::START)
+					room = (AIRoom*)world->SpawnActor(startRoomTemplates[get(i, j)->roomIdx]->GetClass(), &location, &rotation, params);
+				else
+					room = (AIRoom*)world->SpawnActor(roomTemplates[get(i, j)->roomIdx]->GetClass(), &location, &rotation, params);
+					
 				room->position = FVector2D(i, j);
 				rooms.Add(room);
+				
 
 			}
 			else if (get(i, j)->flags & RoomStr::SUB)
@@ -357,8 +372,8 @@ void ALevelCreation::createLevel(int32 levelSize)
 						if (rooms[k]->position.X == nRoomPosX && 
 							rooms[k]->position.Y == nRoomPosY)
 						{
-							room->getSubroom(i - room->position.X , j - room->position.Y).nextUp = rooms[k];
-							rooms[k]->getSubroom(i - nRoomPosX, j - 1 - nRoomPosY).nextDown = room;
+							room->getSubRoom(i - room->position.X , j - room->position.Y).nextUp = rooms[k];
+							rooms[k]->getSubRoom(i - nRoomPosX, j - 1 - nRoomPosY).nextDown = room;
 							break;
 						}
 					}
@@ -389,8 +404,8 @@ void ALevelCreation::createLevel(int32 levelSize)
 						if (rooms[k]->position.X == nRoomPosX &&
 							rooms[k]->position.Y == nRoomPosY)
 						{
-							room->getSubroom(i - room->position.X, j - room->position.Y).nextLeft = rooms[k];
-							rooms[k]->getSubroom(i - 1 - nRoomPosX, j - nRoomPosY).nextRight = room;
+							room->getSubRoom(i - room->position.X, j - room->position.Y).nextLeft = rooms[k];
+							rooms[k]->getSubRoom(i - 1 - nRoomPosX, j - nRoomPosY).nextRight = room;
 							break;
 						}
 					}
@@ -403,3 +418,5 @@ void ALevelCreation::createLevel(int32 levelSize)
 
 
 }
+
+

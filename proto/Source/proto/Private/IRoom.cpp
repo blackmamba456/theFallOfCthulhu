@@ -21,7 +21,3 @@ int32 AIRoom::getHeight()
 	return height;
 }
 
-FSubRoom& AIRoom::getSubRoom(int x, int y)
-{
-	return subRooms[y * width + x];
-}
