@@ -52,10 +52,15 @@ class PROTO_API ALevelCreation : public AActor
 
 		static const int32 MAX_LEVELSIZE = 32;
 
-	
 
 		UFUNCTION(BlueprintCallable, Category = Creation)
-			void createLevel(int32 levelSize);
+			void createLevel();
+
+		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
+			int32 levelSize;
+
+		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
+			AIRoom* startRoom;
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
 			TArray<AIRoom*> startRoomTemplates;

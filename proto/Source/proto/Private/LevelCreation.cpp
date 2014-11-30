@@ -262,7 +262,7 @@ void ALevelCreation::checkRooms(int x, int y)
 }
 
 
-void ALevelCreation::createLevel(int32 levelSize)
+void ALevelCreation::createLevel()
 {
 	m_Random.GenerateNewSeed();
 
@@ -321,10 +321,14 @@ void ALevelCreation::createLevel(int32 levelSize)
 				params.Owner = this;
 
 				if (layoutRoom->flags & RoomStr::START)
+				{
 					room = (AIRoom*)world->SpawnActor(startRoomTemplates[get(i, j)->roomIdx]->GetClass(), &location, &rotation, params);
+					startRoom = room;
+				}
 				else
+				{
 					room = (AIRoom*)world->SpawnActor(roomTemplates[get(i, j)->roomIdx]->GetClass(), &location, &rotation, params);
-					
+				}
 				room->position = FVector2D(i, j);
 				rooms.Add(room);
 				
