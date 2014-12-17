@@ -75,8 +75,10 @@ class PROTO_API ALevelCreation : public AActor
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
 			TArray<UClass*> roomTemplates;
 
+		/*
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
 			UActorComponent* wallTemplate;
+		*/
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Level)
 			TArray<AIRoom*> rooms;

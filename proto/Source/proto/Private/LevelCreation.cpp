@@ -379,7 +379,7 @@ void ALevelCreation::checkRooms(int x, int y)
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 50.f, FColor::Blue, "couldnt find fitting room " + FString::FromInt(x) + " " + FString::FromInt(y));
+		//GEngine->AddOnScreenDebugMessage(-1, 50.f, FColor::Blue, "couldnt find fitting room " + FString::FromInt(x) + " " + FString::FromInt(y));
 	}
 
 
@@ -487,15 +487,7 @@ void ALevelCreation::createLevel()
 				FSubRoom& subRoom = room->getSubRoom(i - room->position.X, j - room->position.Y);
 
 
-				if (subRoom.exitLeft && layoutRoom->flags & RoomStr::LEFTWALL)
-				{
-					room->AddOwnedComponent(wallTemplate);
-					
-
-					subRoom.exitLeft = false;
-				}
-
-
+				
 				subRoom.exitLeft = layoutRoom->flags & RoomStr::LEFTENTRY ? true : false;
 				subRoom.exitRight = layoutRoom->flags & RoomStr::RIGHTENTRY ? true : false;
 				subRoom.exitUp = layoutRoom->flags & RoomStr::UPENTRY ? true : false;
