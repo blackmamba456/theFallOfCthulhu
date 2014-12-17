@@ -13,13 +13,13 @@ struct FSubRoom
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
 		bool exitLeft = false;							   
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
 		bool exitRight = false;							   
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
 		bool exitUp = false;							  
-	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
 		bool exitDown = false;
 
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)

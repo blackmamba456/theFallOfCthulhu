@@ -3,6 +3,7 @@
 #pragma once
 #include <stack>
 #include "GameFramework/Actor.h"
+#include "Runtime/Engine/Classes/Components/ChildActorComponent.h"
 #include "IRoom.h"
 
 #include "LevelCreation.generated.h"
@@ -17,13 +18,19 @@ struct RoomStr
 {
 	enum Flags
 	{
-		LEFT = 1,
-		RIGHT = 2,
-		UP = 4,
-		DOWN = 8,
+		LEFTENTRY = 1,
+		RIGHTENTRY = 2,
+		UPENTRY = 4,
+		DOWNENTRY = 8,
 		MAIN = 16,
 		SUB = 32,
-		START = 64
+		START = 64,
+		LEFTWALL = 128,
+		RIGHTWALL = 256,
+		UPWALL = 1024,
+		DOWNWALL = 2048
+
+
 	};
 
 	union
@@ -63,13 +70,19 @@ class PROTO_API ALevelCreation : public AActor
 			AIRoom* startRoom;
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
-			TArray<AIRoom*> startRoomTemplates;
+			TArray<UClass*> startRoomTemplates;
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
-			TArray<AIRoom*> roomTemplates;
+			TArray<UClass*> roomTemplates;
+
+		/*
+		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+			UActorComponent* wallTemplate;
+		*/
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Level)
 			TArray<AIRoom*> rooms;
+
 
 		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
 			int32 roomSize;
