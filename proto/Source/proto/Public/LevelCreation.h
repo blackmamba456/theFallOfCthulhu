@@ -25,10 +25,11 @@ struct RoomStr
 		MAIN = 16,
 		SUB = 32,
 		START = 64,
-		LEFTWALL = 128,
-		RIGHTWALL = 256,
+		END = 128,
+		LEFTWALL = 256,
+		RIGHTWALL = 512,
 		UPWALL = 1024,
-		DOWNWALL = 2048
+		DOWNWALL = 2048,
 
 
 	};
@@ -49,8 +50,8 @@ struct RoomStr
 
 
 /**
- *
- */
+*
+*/
 UCLASS()
 class PROTO_API ALevelCreation : public AActor
 {
@@ -60,32 +61,35 @@ class PROTO_API ALevelCreation : public AActor
 		static const int32 MAX_LEVELSIZE = 32;
 
 
-		UFUNCTION(BlueprintCallable, Category = Creation)
-			void createLevel();
+	UFUNCTION(BlueprintCallable, Category = Creation)
+		void createLevel();
 
-		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
-			int32 levelSize;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
+		int32 levelSize;
 
-		UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
-			AIRoom* startRoom;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
+		AIRoom* startRoom;
 
-		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
-			TArray<UClass*> startRoomTemplates;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+		TArray<UClass*> startRoomTemplates;
 
-		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
-			TArray<UClass*> roomTemplates;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+		TArray<UClass*> endRoomTemplates;
 
-		/*
-		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
-			UActorComponent* wallTemplate;
-		*/
-
-		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Level)
-			TArray<AIRoom*> rooms;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+		TArray<UClass*> roomTemplates;
 
 
-		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
-			int32 roomSize;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+		UClass* wallTemplate;
+
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Level)
+		TArray<AIRoom*> rooms;
+
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+		int32 roomSize;
 
 private:
 
@@ -103,7 +107,7 @@ private:
 
 
 
-}; 
+};
 
 
 inline RoomStr* ALevelCreation::get(int x, int y)

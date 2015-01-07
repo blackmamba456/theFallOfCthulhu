@@ -13,35 +13,35 @@ struct FSubRoom
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
-		bool exitLeft = false;							   
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
-		bool exitRight = false;							   
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
-		bool exitUp = false;							  
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+		bool exitLeft = false;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+		bool exitRight = false;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+		bool exitUp = false;
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
 		bool exitDown = false;
 
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
 		AIRoom* nextLeft = 0;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
 		AIRoom* nextRight = 0;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
 		AIRoom* nextUp = 0;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
 		AIRoom* nextDown = 0;
 };
 
 /**
- * 
- */
+*
+*/
 UCLASS()
 class PROTO_API AIRoom : public AActor
 {
 	GENERATED_UCLASS_BODY()
 
 
-	int32 getWidth();
+		int32 getWidth();
 
 	int32 getHeight();
 
@@ -59,6 +59,8 @@ class PROTO_API AIRoom : public AActor
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = Position)
 		FVector2D position;
 
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = Wall)
+		TArray<AActor*> walls;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = Creation)
 		void build(int32& numAvailableChests);
@@ -67,7 +69,7 @@ class PROTO_API AIRoom : public AActor
 };
 
 
-inline FSubRoom& AIRoom::getSubRoom(int x, int y) 
+inline FSubRoom& AIRoom::getSubRoom(int x, int y)
 {
 	return subRooms[x + y*width];
 }

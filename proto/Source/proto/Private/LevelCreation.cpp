@@ -7,7 +7,7 @@
 
 
 #include <sstream>
-
+#include <vector>
 
 ALevelCreation::ALevelCreation(const class FPostConstructInitializeProperties& PCIP)
 	: Super(PCIP)
@@ -41,6 +41,8 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 	get(x, y)->flags |= (RoomStr::MAIN | flags);
 
 
+	std::vector<std::pair<int, int>> nextRooms;
+
 	// set and add next rooms
 	for (int i = 0; i < room->getWidth(); i++)
 	{
@@ -57,7 +59,7 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 				if (subRoom.exitLeft)
 				{
 					neighbour->flags |= RoomStr::RIGHTENTRY;
-					m_NextRooms.push({ x + i - 1, y + j });
+					nextRooms.push_back({ x + i - 1, y + j });
 				}
 				else
 				{
@@ -69,6 +71,10 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 
 				}
 			}
+			else if (subRoom.exitLeft)
+			{
+				layoutRoom->flags |= RoomStr::LEFTWALL;
+			}
 
 			if (get(x + i + 1, y + j) && !(layoutRoom->flags & RoomStr::RIGHTWALL))
 			{
@@ -76,7 +82,7 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 				if (subRoom.exitRight)
 				{
 					neighbour->flags |= RoomStr::LEFTENTRY;
-					m_NextRooms.push({ x + i + 1, y + j });
+					nextRooms.push_back({ x + i + 1, y + j });
 				}
 				else
 				{
@@ -88,6 +94,10 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 
 				}
 			}
+			else if (subRoom.exitRight)
+			{
+				layoutRoom->flags |= RoomStr::RIGHTWALL;
+			}
 
 			if (get(x + i, y + j - 1) && !(layoutRoom->flags & RoomStr::UPWALL))
 			{
@@ -95,7 +105,7 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 				if (subRoom.exitUp)
 				{
 					neighbour->flags |= RoomStr::DOWNENTRY;
-					m_NextRooms.push({ x + i, y + j - 1});
+					nextRooms.push_back({ x + i, y + j - 1 });
 				}
 				else
 				{
@@ -107,6 +117,10 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 
 				}
 			}
+			else if (subRoom.exitUp)
+			{
+				layoutRoom->flags |= RoomStr::UPWALL;
+			}
 
 			if (get(x + i, y + j + 1) && !(layoutRoom->flags & RoomStr::DOWNWALL))
 			{
@@ -114,7 +128,7 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 				if (subRoom.exitDown)
 				{
 					neighbour->flags |= RoomStr::UPENTRY;
-					m_NextRooms.push({ x + i, y + j + 1});
+					nextRooms.push_back({ x + i, y + j + 1 });
 				}
 				else
 				{
@@ -126,49 +140,27 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 
 				}
 			}
-
-
-			/*
-			if (subRoom.exitRight && get(x + i + 1, y + j))
+			else if (subRoom.exitDown)
 			{
-				//layoutRoom->flags |= RoomStr::RIGHT;
-
-				RoomStr* neighbour = get(x + i + 1, y + j);
-				if (neighbour->roomIdx == -1)
-				{
-					neighbour->flags |= RoomStr::LEFT;
-					m_NextRooms.push({ x + i + 1, y + j });
-				}
+				layoutRoom->flags |= RoomStr::DOWNWALL;
 			}
-
-			if (subRoom.exitUp && get(x + i, y + j - 1))
-			{
-				//layoutRoom->flags |= RoomStr::UP;
-
-				RoomStr* neighbour = get(x + i, y + j - 1);
-				if (neighbour->roomIdx == -1)
-				{
-					neighbour->flags |= RoomStr::DOWN;
-					m_NextRooms.push({ x + i, y + j - 1 });
-				}
-			}
-
-			if (subRoom.exitDown && get(x + i, y + j + 1))
-			{
-				//layoutRoom->flags |= RoomStr::DOWN;
-
-				RoomStr* neighbour = get(x + i, y + j + 1);
-				if (neighbour->roomIdx == -1)
-				{
-					neighbour->flags |= RoomStr::UP;
-					m_NextRooms.push({ x + i, y + j + 1 });
-				}
-			}
-
-			*/
 
 		}
 	}
+
+	// shuffle rooms
+	for (int i = 0; i < nextRooms.size(); ++i)
+	{
+		int rand = m_Random.RandRange(0, nextRooms.size() - 1);
+
+		Swap(nextRooms[i], nextRooms[rand]);
+	}
+
+	for (int i = 0; i < nextRooms.size(); ++i)
+	{
+		m_NextRooms.push(nextRooms[i]);
+	}
+
 }
 
 struct RoomPriority
@@ -183,18 +175,29 @@ void ALevelCreation::checkRooms(int x, int y)
 {
 	RoomPriority bestRoom;
 
-	// TODO set actual exit
+
+	TArray<UClass*>* templates = &roomTemplates;
+
+	int flags = 0;
+
+
 	if (!m_Exit && y == (m_LevelSize - 1))
+	{
 		m_Exit = true;
+		flags |= RoomStr::END;
+		templates = &endRoomTemplates;
+	}
 
 
-	int start = m_Random.RandRange(0, roomTemplates.Num() - 1);
-	for (int i = 0; i < roomTemplates.Num(); i++)
+
+
+	int start = m_Random.RandRange(0, templates->Num() - 1);
+	for (int i = 0; i < templates->Num(); i++)
 	{
 		// check how well this room fits
 		// if it fits perfectly choose it else put it on the queue
 
-		AIRoom* room = roomTemplates[(i + start) % roomTemplates.Num()]->GetDefaultObject<AIRoom>();
+		AIRoom* room = (*templates)[(i + start) % templates->Num()]->GetDefaultObject<AIRoom>();
 
 
 		for (int startX = 0; startX < room->getWidth(); startX++)
@@ -242,7 +245,6 @@ void ALevelCreation::checkRooms(int x, int y)
 							numTotalExits++;
 							if (subRoom.exitLeft)
 							{
-
 								numFittingExits++;
 							}
 						}
@@ -257,7 +259,7 @@ void ALevelCreation::checkRooms(int x, int y)
 							if (subRoom.exitLeft)
 							{
 								numTotalExits++;
-								if (get(_x-1, _y))
+								if (get(_x - 1, _y))
 								{
 									down = true;
 									numFreeExits++;
@@ -356,13 +358,13 @@ void ALevelCreation::checkRooms(int x, int y)
 				//perfect fit
 				if (numTotalExits == (numFittingExits + numFreeExits))
 				{
-					setRoom(x - startX, y - startY, roomTemplates[(i+start)%roomTemplates.Num()]->GetDefaultObject<AIRoom>(), (i + start) % roomTemplates.Num());
+					setRoom(x - startX, y - startY, (*templates)[(i + start) % templates->Num()]->GetDefaultObject<AIRoom>(), (i + start) % templates->Num(), flags);
 					return;
 				}
 				else if (bestRoom.prio < (numFittingExits + numFreeExits) / (float)numTotalExits) // check if its the next best room
 				{
-					bestRoom.idx = (i + start) % roomTemplates.Num();
-					bestRoom.prio = (numFittingExits + numFreeExits) / (float)numTotalExits;
+					bestRoom.idx = (i + start) % templates->Num();
+					bestRoom.prio = (numFittingExits) / (float)numTotalExits;
 					bestRoom.subRoomX = startX;
 					bestRoom.subRoomY = startY;
 				}
@@ -375,7 +377,7 @@ void ALevelCreation::checkRooms(int x, int y)
 	if (bestRoom.idx != -1)
 	{
 		// TODO adjust entries of neighbours
-		setRoom(x - bestRoom.subRoomX, y - bestRoom.subRoomY, roomTemplates[bestRoom.idx]->GetDefaultObject<AIRoom>(), bestRoom.idx);
+		setRoom(x - bestRoom.subRoomX, y - bestRoom.subRoomY, (*templates)[bestRoom.idx]->GetDefaultObject<AIRoom>(), bestRoom.idx, flags);
 	}
 	else
 	{
@@ -391,6 +393,7 @@ void ALevelCreation::createLevel()
 	m_Random.GenerateNewSeed();
 
 
+
 	if (levelSize > MAX_LEVELSIZE) levelSize = MAX_LEVELSIZE;
 
 	m_LevelSize = levelSize;
@@ -403,7 +406,7 @@ void ALevelCreation::createLevel()
 
 
 	setRoom(startPosition, 0, startRoomTemplates[startId]->GetDefaultObject<AIRoom>(), startId, RoomStr::START);
-	
+
 
 	while (!m_NextRooms.empty())
 	{
@@ -448,20 +451,24 @@ void ALevelCreation::createLevel()
 					room = (AIRoom*)world->SpawnActor(startRoomTemplates[get(i, j)->roomIdx], &location, &rotation, params);
 					startRoom = room;
 				}
+				else if (layoutRoom->flags & RoomStr::END)
+				{
+					room = (AIRoom*)world->SpawnActor(endRoomTemplates[get(i, j)->roomIdx], &location, &rotation, params);
+				}
 				else
 				{
 					room = (AIRoom*)world->SpawnActor(roomTemplates[get(i, j)->roomIdx], &location, &rotation, params);
 				}
 				room->position = FVector2D(i, j);
 				room->AttachRootComponentToActor(this);
-				
+
 				if (!room)
 				{
 					GEngine->AddOnScreenDebugMessage(-1, 50.0f, FColor::Blue, "failed building room " + FString::FromInt(i) + " " + FString::FromInt(j));
 				}
 
 				rooms.Add(room);
-				
+
 			}
 			else if (get(i, j)->flags & RoomStr::SUB)
 			{
@@ -486,20 +493,57 @@ void ALevelCreation::createLevel()
 
 				FSubRoom& subRoom = room->getSubRoom(i - room->position.X, j - room->position.Y);
 
+				if (layoutRoom->flags & RoomStr::LEFTWALL && subRoom.exitLeft)
+				{
+					FVector location = FVector(0, 0.5, 0) * roomSize + FVector(0, -i*roomSize + levelSize / 2 * roomSize, -j * roomSize);
+					FRotator rotation = FRotator(0, 0, 0);
+					AActor* newWall = world->SpawnActor(wallTemplate, &location, &rotation);
+					room->walls.Add(newWall);
+					newWall->AttachRootComponentToActor(room, NAME_None, EAttachLocation::KeepWorldPosition, true);
 
-				
+				}
+
+				if (layoutRoom->flags & RoomStr::RIGHTWALL && subRoom.exitRight)
+				{
+					FVector location = FVector(0, -0.5, 0) * roomSize + FVector(0, -i*roomSize + levelSize / 2 * roomSize, -j * roomSize);
+					FRotator rotation = FRotator(0, 0, 0);
+					AActor* newWall = world->SpawnActor(wallTemplate, &location, &rotation);
+					room->walls.Add(newWall);
+					newWall->AttachRootComponentToActor(room, NAME_None, EAttachLocation::KeepWorldPosition, true);;
+				}
+
+				if (layoutRoom->flags & RoomStr::UPWALL && subRoom.exitUp)
+				{
+					FVector location = FVector(0, 0, 0.5f) * roomSize + FVector(0, -i*roomSize + levelSize / 2 * roomSize, -j * roomSize);
+					FRotator rotation = FRotator(0, 0, 90);
+					AActor* newWall = world->SpawnActor(wallTemplate, &location, &rotation);
+					room->walls.Add(newWall);
+					newWall->AttachRootComponentToActor(room, NAME_None, EAttachLocation::KeepWorldPosition, true);
+				}
+
+				if (layoutRoom->flags & RoomStr::DOWNWALL && subRoom.exitDown)
+				{
+					FVector location = FVector(0, 0, -0.5f) * roomSize + FVector(0, -i*roomSize + levelSize / 2 * roomSize, -j * roomSize);
+					FRotator rotation = FRotator(0, 0, 90);
+					AActor* newWall = world->SpawnActor(wallTemplate, &location, &rotation);
+					room->walls.Add(newWall);
+					newWall->AttachRootComponentToActor(room, NAME_None, EAttachLocation::KeepWorldPosition, true);
+				}
+
+
+
 				subRoom.exitLeft = layoutRoom->flags & RoomStr::LEFTENTRY ? true : false;
 				subRoom.exitRight = layoutRoom->flags & RoomStr::RIGHTENTRY ? true : false;
 				subRoom.exitUp = layoutRoom->flags & RoomStr::UPENTRY ? true : false;
 				subRoom.exitDown = layoutRoom->flags & RoomStr::DOWNENTRY ? true : false;
 
-				
+
 				if (layoutRoom->flags & RoomStr::UPENTRY)
 				{
 					RoomStr* neighbour = get(i, j - 1);
 
 					int nRoomPosX = -1;
-					int nRoomPosY = -1; 
+					int nRoomPosY = -1;
 
 					if (neighbour->flags & RoomStr::MAIN)
 					{
@@ -520,13 +564,13 @@ void ALevelCreation::createLevel()
 					bool connected = false;
 					for (int k = 0; k < rooms.Num(); k++)
 					{
-						if (rooms[k]->position.X == nRoomPosX && 
+						if (rooms[k]->position.X == nRoomPosX &&
 							rooms[k]->position.Y == nRoomPosY)
 						{
 
 							connected = true;
 
-							room->getSubRoom(i - room->position.X , j - room->position.Y).nextUp = rooms[k];
+							room->getSubRoom(i - room->position.X, j - room->position.Y).nextUp = rooms[k];
 							rooms[k]->getSubRoom(i - nRoomPosX, j - 1 - nRoomPosY).nextDown = room;
 							break;
 						}
