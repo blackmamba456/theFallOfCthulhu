@@ -3,10 +3,10 @@
 #include "proto.h"
 #include "IRoom.h"
 
-
 AIRoom::AIRoom(const class FPostConstructInitializeProperties& PCIP)
 	: Super(PCIP)
 {
+	PrimaryActorTick.bCanEverTick = true;
 
 }
 

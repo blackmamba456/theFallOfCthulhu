@@ -37,11 +37,17 @@ void ALevelCreation::setRoom(int x, int y, AIRoom* room, int idx, int flags)
 			}
 		}
 	}
+
+	int roomWidth = room->getWidth();
+	int roomHeight = room->getHeight();
+
 	get(x, y)->roomIdx = idx;
+	get(x, y)->roomWidth = roomWidth;
+	get(x, y)->roomHeight = roomHeight;
 	get(x, y)->flags |= (RoomStr::MAIN | flags);
 
 
-	std::vector<std::pair<int, int>> nextRooms;
+	std::vector<Vec2> nextRooms;
 
 	// set and add next rooms
 	for (int i = 0; i < room->getWidth(); i++)
@@ -387,6 +393,44 @@ void ALevelCreation::checkRooms(int x, int y)
 
 }
 
+bool ALevelCreation::checkSpecialRoom(int x, int y)
+{
+	RoomStr* layoutRoom = get(x, y);
+
+	if (!layoutRoom || (layoutRoom->flags & RoomStr::SPECIAL) || !(layoutRoom->flags & RoomStr::MAIN) || (layoutRoom->roomWidth != 1 || layoutRoom->roomHeight != 1))
+		return false;
+
+
+	TArray<UClass*>* templates = &healRoomTemplates;
+
+	int start = m_Random.RandRange(0, templates->Num() - 1);
+
+	for (int i = 0; i < templates->Num(); ++i)
+	{
+		AIRoom* room = (*templates)[(i + start) % templates->Num()]->GetDefaultObject<AIRoom>();
+
+		if (room->width != 1 || room->height != 1)
+			continue;
+
+		FSubRoom& subRoom = room->getSubRoom(0, 0);
+
+		if ((!(layoutRoom->flags & RoomStr::LEFTENTRY)	!= !subRoom.exitLeft) ||
+			(!(layoutRoom->flags & RoomStr::RIGHTENTRY) != !subRoom.exitRight) ||
+			(!(layoutRoom->flags & RoomStr::UPENTRY)	!= !subRoom.exitUp) ||
+			(!(layoutRoom->flags & RoomStr::DOWNENTRY)	!= !subRoom.exitDown))
+		{
+			continue;
+		}
+
+		layoutRoom->flags |= RoomStr::HEAL;
+		layoutRoom->roomIdx = (i+start)%templates->Num();
+
+		return true;
+
+	}
+
+	return false;
+}
 
 void ALevelCreation::createLevel()
 {
@@ -411,15 +455,51 @@ void ALevelCreation::createLevel()
 	while (!m_NextRooms.empty())
 	{
 		//std::pair<int, int> nextRoom = nextRooms.front();
-		std::pair<int, int> nextRoom = m_NextRooms.top();
+		Vec2 nextRoom = m_NextRooms.top();
 		m_NextRooms.pop();
 
-		if (get(nextRoom.first, nextRoom.second)->roomIdx == -1)
+		if ((get(nextRoom.x, nextRoom.y)->flags & (RoomStr::MAIN | RoomStr::SUB)) == 0)
 		{
-			checkRooms(nextRoom.first, nextRoom.second);
+			checkRooms(nextRoom.x, nextRoom.y);
 		}
 
 	}
+
+
+	// second pass
+	// set special rooms
+	{
+		//get list of all rooms
+		Vec2* rooms = new Vec2[m_LevelSize * m_LevelSize];
+
+		for (int j = 0; j < m_LevelSize; ++j)
+			for (int i = 0; i < m_LevelSize; ++i)
+				rooms[j*m_LevelSize + i] = { i, j };
+
+		// shuffle roooms
+		for (int i = 0; i < m_LevelSize*m_LevelSize; ++i)
+		{
+			int j = m_Random.RandRange(0, (m_LevelSize * m_LevelSize)-1);
+
+			std::swap(rooms[i], rooms[j]);
+		}
+
+
+		// try spawning special room
+		bool spawnSuccesfull = false;
+		for (int i = 0; i < m_LevelSize*m_LevelSize; ++i)
+		{
+			if (checkSpecialRoom(rooms[i].x, rooms[i].y))
+			{
+				spawnSuccesfull = true;
+				break;
+			}
+		}
+		
+
+		delete[] rooms;
+	}
+	//
 
 
 	//construct level
@@ -448,17 +528,23 @@ void ALevelCreation::createLevel()
 
 				if (layoutRoom->flags & RoomStr::START)
 				{
-					room = (AIRoom*)world->SpawnActor(startRoomTemplates[get(i, j)->roomIdx], &location, &rotation, params);
+					room = world->SpawnActor<AIRoom>(startRoomTemplates[get(i, j)->roomIdx], location, rotation, params);
 					startRoom = room;
 				}
 				else if (layoutRoom->flags & RoomStr::END)
 				{
-					room = (AIRoom*)world->SpawnActor(endRoomTemplates[get(i, j)->roomIdx], &location, &rotation, params);
+					room = world->SpawnActor<AIRoom>(endRoomTemplates[get(i, j)->roomIdx], location, rotation, params);
+				}
+				else if (layoutRoom->flags & RoomStr::HEAL)
+				{
+					room = world->SpawnActor<AIRoom>(healRoomTemplates[get(i, j)->roomIdx], location, rotation, params);
 				}
 				else
 				{
-					room = (AIRoom*)world->SpawnActor(roomTemplates[get(i, j)->roomIdx], &location, &rotation, params);
+					room = world->SpawnActor<AIRoom>(roomTemplates[get(i, j)->roomIdx], location, rotation, params);
 				}
+
+				
 				room->position = FVector2D(i, j);
 				room->AttachRootComponentToActor(this);
 
@@ -638,3 +724,15 @@ void ALevelCreation::createLevel()
 }
 
 
+void ALevelCreation::destroyLevel_Implementation()
+{
+	for (int i = 0; i < m_LevelSize * m_LevelSize; ++i)
+	{
+		m_Layout[i] = RoomStr();
+	}
+
+	rooms.Empty();
+
+	startRoom = 0;
+
+}

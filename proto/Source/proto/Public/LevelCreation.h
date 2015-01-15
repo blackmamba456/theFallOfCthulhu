@@ -9,8 +9,13 @@
 #include "LevelCreation.generated.h"
 
 
+struct Vec2
+{
+	int x;
+	int y;
+};
 
-typedef std::stack < std::pair<int, int> > NextRooms;
+typedef std::stack < Vec2 > NextRooms;
 
 
 
@@ -30,13 +35,22 @@ struct RoomStr
 		RIGHTWALL = 512,
 		UPWALL = 1024,
 		DOWNWALL = 2048,
+		HEAL = 4096,
+
+		SPECIAL = START | END | HEAL
 
 
 	};
 
+	int flags = 0;
 	union
 	{
-		int roomIdx = -1;
+		struct
+		{
+			short roomIdx;
+			char roomWidth;
+			char roomHeight;
+		};
 
 		struct
 		{
@@ -45,7 +59,6 @@ struct RoomStr
 		} mainPos;
 
 	};
-	int flags = 0;
 };
 
 
@@ -64,6 +77,9 @@ class PROTO_API ALevelCreation : public AActor
 	UFUNCTION(BlueprintCallable, Category = Creation)
 		void createLevel();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Creation)
+		void destroyLevel();
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = Level)
 		int32 levelSize;
 
@@ -75,6 +91,9 @@ class PROTO_API ALevelCreation : public AActor
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
 		TArray<UClass*> endRoomTemplates;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
+		TArray<UClass*> healRoomTemplates;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Creation)
 		TArray<UClass*> roomTemplates;
@@ -95,6 +114,8 @@ private:
 
 	void setRoom(int x, int y, AIRoom* room, int idx, int flags = 0);
 	void checkRooms(int x, int y);
+
+	bool checkSpecialRoom(int x, int y);
 
 	RoomStr* get(int x, int y);
 

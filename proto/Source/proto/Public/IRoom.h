@@ -13,7 +13,7 @@ struct FSubRoom
 {
 	GENERATED_USTRUCT_BODY()
 
-		UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
 		bool exitLeft = false;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = subRoom)
 		bool exitRight = false;
@@ -49,6 +49,10 @@ class PROTO_API AIRoom : public AActor
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = subRoom)
 		TArray<FSubRoom> subRooms;
+
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
+		float RoomSize;
+
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category = subRoom)
 		int32 width;
